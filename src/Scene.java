@@ -1,69 +1,31 @@
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.Random;
-import javax.swing.Timer;
+import javax.swing.*;
 
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-
-
-public class Scene extends JFrame implements KeyListener{
+public class Scene extends JFrame{
+	
 	private GridBagConstraints [][] gc = new GridBagConstraints[10][10];
 	private JLabel[][] grounds = new JLabel[10][10]; //10x10 maps
 	Random ran = new Random();
-	
+
 	private ImageIcon ground; 
-	private ImageIcon player; 
-	private ImageIcon enemy; 
-	private ImageIcon sword; 
-	private ImageIcon win; 
-	private ImageIcon loss;
-
-	private int playerx; //player's x
-	private int playery; //plaer's y
-	private int enemyx;  //enemy's x
-	private int enemyy;  //enemy's y
-	private int swordx;  //sword's x
-	private int swordy;  //sword's y
-
 	private boolean havesword; //set if player get the sword
 	private boolean stepsword; //set if enemy step on sword
 
+	Entity player = new Entity(9,9,new ImageIcon(Scene.class.getResource("res/Player.png")));
+	Entity enemy = new Entity(0,0, new ImageIcon(Scene.class.getResource("res/Enemy.png")));
+	Entity sword = new Entity(ran.nextInt(10),ran.nextInt(10),new ImageIcon(Scene.class.getResource("res/sword.png")));
+	
 	//The way player moves, the way enemy moves, the result of game, did player get the sword 
 	Scene(){	
-		setLayout(new GridBagLayout());
-		playerx = 9;
-		playery = 9;
-		enemyx = 0;
-		enemyy = 0;
-		swordx = ran.nextInt(10);
-		swordy = ran.nextInt(10);
-		
 		ground = new ImageIcon(Scene.class.getResource("res/ground.png"));
-		sword = new ImageIcon(Scene.class.getResource("res/sword.png"));
-		enemy = new ImageIcon(Scene.class.getResource("res/Enemy.png"));
-		player = new ImageIcon(Scene.class.getResource("res/Player.png"));
-		win = new ImageIcon(Scene.class.getResource("res/Win.png"));
-		loss = new ImageIcon(Scene.class.getResource("res/Loss.png"));
-		Image image = player.getImage();
-		Image newimg = image.getScaledInstance(66, 64,  java.awt.Image.SCALE_SMOOTH);
-		player = new ImageIcon(newimg);
-		image = win.getImage();
-		newimg = image.getScaledInstance(66, 64,  java.awt.Image.SCALE_SMOOTH);
-		win = new ImageIcon(newimg);
-		image = loss.getImage();
-		newimg = image.getScaledInstance(66, 64,  java.awt.Image.SCALE_SMOOTH);
-		loss = new ImageIcon(newimg);
-		image = sword.getImage();
-		newimg = image.getScaledInstance(66, 64,  java.awt.Image.SCALE_SMOOTH); 
-		sword = new ImageIcon(newimg);
+		
+		this.setTitle("Minigame");
+		this.setSize(670, 670);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setVisible(true);
+		this.setLayout(new GridBagLayout());
 		
 		for(int i = 0; i < 10 ; i++){
 			for(int j = 0;j < 10;j++){
@@ -78,50 +40,47 @@ public class Scene extends JFrame implements KeyListener{
 			}
 		}
 		
-		grounds[playerx][playery].setIcon(player);
-		grounds[enemyx][enemyy].setIcon(enemy);
-		grounds[swordx][swordy].setIcon(sword);
-		addKeyListener(this);
-		setVisible(true);
+		this.addKeyListener(new KeyAdapter() {
+			public void keyTyped(KeyEvent e) {
+				grounds[player.x][player.y].setIcon(ground);
+		        if(e.getKeyChar()=='w'){
+		        	if(player.y != 0) player.y--;
+		        }else if(e.getKeyChar()=='s'){
+		        	if(player.y != 9) player.y++;
+		        }else if(e.getKeyChar()=='a'){
+		        	if(player.x != 0) player.x--;
+		        }else if(e.getKeyChar()=='d'){
+		        	if(player.x != 9) player.x++;
+		        }
+		        grounds[player.x][player.y].setIcon(player.img);
+		        if(player.x == sword.x && player.y == sword.y ){
+		        	havesword = true;
+		        }
+		        Judgement();
+		    }
+	      });
+		
+		grounds[player.x][player.y].setIcon(player.img);
+		grounds[enemy.x][enemy.y].setIcon(enemy.img);
+		grounds[sword.x][sword.y].setIcon(sword.img);
 		
         Timer t= new Timer(1000, new enemyMovment());
         t.start();
 	}
-	public void keyTyped(KeyEvent e) {
-		grounds[playerx][playery].setIcon(ground);
-        if(e.getKeyChar()=='w'){
-        	if(playery != 0) playery--;
-        }else if(e.getKeyChar()=='s'){
-        	if(playery != 9) playery++;
-        }else if(e.getKeyChar()=='a'){
-        	if(playerx != 0) playerx--;
-        }else if(e.getKeyChar()=='d'){
-        	if(playerx != 9) playerx++;
-        }
-        grounds[playerx][playery].setIcon(player);
-        if(playerx == swordx && playery == swordy ){
-        	havesword = true;
-        }
-        Judgement();
-    }
-	@Override
-	public void keyPressed(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		
+	public ImageIcon mkImg(ImageIcon i) {
+		Image tmp = i.getImage();
+		Image newimg = tmp.getScaledInstance(66, 64,  java.awt.Image.SCALE_SMOOTH);
+		return new ImageIcon(newimg);
 	}
-	@Override
-	public void keyReleased(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+
 	public void Judgement(){
-		if(playerx == enemyx && playery == enemyy ){
+		if(player.x == enemy.x && player.y == enemy.y ){
         	if(havesword){
-        		grounds[playerx][playery].setIcon(win);
+        		grounds[player.x][player.y].setIcon(this.mkImg(new ImageIcon(Scene.class.getResource("res/Win.png"))));
         		JOptionPane.showMessageDialog(this,"win!");
         		this.dispose();
         	}else{
-        		grounds[playerx][playery].setIcon(loss);
+        		grounds[player.x][player.y].setIcon(this.mkImg(new ImageIcon(Scene.class.getResource("res/Loss.png"))));
         		JOptionPane.showMessageDialog(this,"lose!");
         		this.dispose();
         	}
@@ -130,25 +89,24 @@ public class Scene extends JFrame implements KeyListener{
 	}
 	class enemyMovment implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
-			if(stepsword) grounds[enemyx][enemyy].setIcon(sword);
-			else grounds[enemyx][enemyy].setIcon(ground);
-			if(enemyx-playerx > 0 && enemyx != 0){
-				enemyx --;
-			}else if(enemyx-playerx < 0 &&enemyx != 9){
-				 enemyx ++;
-			}else if(enemyy-playery > 0 && enemyy != 0){
-				enemyy --;
-			}else if(enemyy-playery < 0 && enemyy != 9){
-				 enemyy ++;
+			if(stepsword) grounds[enemy.x][enemy.y].setIcon(sword.img);
+			else grounds[enemy.x][enemy.y].setIcon(ground);
+			if(enemy.x-player.x > 0 && enemy.x != 0){
+				enemy.x --;
+			}else if(enemy.x-player.x < 0 &&enemy.x != 9){
+				 enemy.x ++;
+			}else if(enemy.y-player.y > 0 && enemy.y != 0){
+				enemy.y --;
+			}else if(enemy.y-player.y < 0 && enemy.y != 9){
+				 enemy.y ++;
 			}
-			if(swordx == enemyx && swordy == enemyy){
+			if(sword.x == enemy.x && sword.y == enemy.y){
 				stepsword = true;
 			}else{
 				stepsword = false;
 			}
-			grounds[enemyx][enemyy].setIcon(enemy);
+			grounds[enemy.x][enemy.y].setIcon(enemy.img);
 			Judgement();
 		}
-	}
-	
+	}	
 }
